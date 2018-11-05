@@ -8,20 +8,25 @@ provider "aws" {
 resource "aws_acm_certificate" "10kb_site" {
   domain_name               = "10kb.site"
   subject_alternative_names = ["*.10kb.site"]
-  validation_method         = "DNS"
-}
-
-output "record_name" {
-  value = "${aws_acm_certificate.10kb_site.domain_validation_options.0.resource_record_name}"
-}
-
-output "record_value" {
-  value = "${aws_acm_certificate.10kb_site.domain_validation_options.0.resource_record_value}"
+  validation_method         = "EMAIL"
 }
 
 resource "aws_s3_bucket" "10kb_site" {
   bucket = "10kb.site"
   acl    = "private"
+
+  lifecycle_rule {
+    id      = "uploads"
+    enabled = true
+
+    tags {
+      "unprotected" = "true"
+    }
+
+    expiration {
+      days = 1
+    }
+  }
 }
 
 locals {
@@ -29,7 +34,34 @@ locals {
 }
 
 resource "aws_cloudfront_origin_access_identity" "10kb_site" {
-  comment = "Some comment"
+  comment = "10kb_site bucket access"
+}
+
+data "aws_iam_policy_document" "10kb_site" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.10kb_site.arn}/*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["${aws_cloudfront_origin_access_identity.10kb_site.iam_arn}"]
+    }
+  }
+
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = ["${aws_s3_bucket.10kb_site.arn}"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["${aws_cloudfront_origin_access_identity.10kb_site.iam_arn}"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "10kb_site" {
+  bucket = "${aws_s3_bucket.10kb_site.id}"
+  policy = "${data.aws_iam_policy_document.10kb_site.json}"
 }
 
 resource "aws_cloudfront_distribution" "10kb_site" {
@@ -54,7 +86,7 @@ resource "aws_cloudfront_distribution" "10kb_site" {
   #   prefix          = "myprefix"
   # }
 
-  aliases = ["10kb.site"]
+  aliases = ["www.10kb.site"]
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
@@ -68,7 +100,8 @@ resource "aws_cloudfront_distribution" "10kb_site" {
       }
     }
 
-    viewer_protocol_policy = "allow-all"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
@@ -84,6 +117,10 @@ resource "aws_cloudfront_distribution" "10kb_site" {
   }
   viewer_certificate {
     acm_certificate_arn = "${aws_acm_certificate.10kb_site.arn}"
-    ssl_support_method = "sni-only"
+    ssl_support_method  = "sni-only"
   }
+}
+
+output "cloudfront-subdomain" {
+  value = "Set CNAME for cloudfront record: ${aws_cloudfront_distribution.10kb_site.domain_name}"
 }
