@@ -43,14 +43,14 @@ resource "aws_api_gateway_integration" "uploader_root" {
   uri                     = "${aws_lambda_function.uploader.invoke_arn}"
 }
 
-resource "aws_api_gateway_deployment" "uploader_fourth" {
+resource "aws_api_gateway_deployment" "uploader_0_0_2" {
   depends_on = [
     "aws_api_gateway_integration.uploader",
     "aws_api_gateway_integration.uploader_root",
   ]
 
   rest_api_id = "${aws_api_gateway_rest_api.uploader.id}"
-  stage_name  = "v0_0_1"
+  stage_name  = "v0_0_2"
 }
 
 resource "aws_api_gateway_domain_name" "uploader" {
@@ -60,7 +60,7 @@ resource "aws_api_gateway_domain_name" "uploader" {
 
 resource "aws_api_gateway_base_path_mapping" "test" {
   api_id      = "${aws_api_gateway_rest_api.uploader.id}"
-  stage_name  = "${aws_api_gateway_deployment.uploader_fourth.stage_name}"
+  stage_name  = "${aws_api_gateway_deployment.uploader_0_0_2.stage_name}"
   domain_name = "${aws_api_gateway_domain_name.uploader.domain_name}"
 }
 
@@ -70,7 +70,7 @@ output "uploader_cname" {
 
 resource "aws_api_gateway_method_settings" "uploader" {
   rest_api_id = "${aws_api_gateway_rest_api.uploader.id}"
-  stage_name  = "${aws_api_gateway_deployment.uploader_fourth.stage_name}"
+  stage_name  = "${aws_api_gateway_deployment.uploader_0_0_2.stage_name}"
 
   method_path = "*/*"
 
@@ -93,11 +93,11 @@ resource "aws_lambda_permission" "uploader" {
 
   # The /*/* portion grants access from any method on any resource
   # within the API Gateway "REST API".
-  source_arn = "${aws_api_gateway_deployment.uploader_fourth.execution_arn}/*/*"
+  source_arn = "${aws_api_gateway_deployment.uploader_0_0_2.execution_arn}/*/*"
 }
 
 output "base_url" {
-  value = "${aws_api_gateway_deployment.uploader_fourth.invoke_url}"
+  value = "${aws_api_gateway_deployment.uploader_0_0_2.invoke_url}"
 }
 
 resource "aws_api_gateway_account" "demo" {

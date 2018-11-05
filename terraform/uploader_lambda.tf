@@ -1,7 +1,19 @@
 data "aws_iam_policy_document" "uploader" {
   statement {
     actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+
+    resources = ["arn:aws:logs:*:*:*"]
+    effect    = "Allow"
+  }
+
+  statement {
+    actions = [
       "s3:PutObject",
+      "s3:PutObjectTagging",
       "s3:HeadObject",
       "s3:GetObject",
       "s3:ListBucket",
@@ -11,6 +23,7 @@ data "aws_iam_policy_document" "uploader" {
       "arn:aws:s3:::10kb.site/*",
       "arn:aws:s3:::10kb.site",
     ]
+    effect    = "Allow"
   }
 }
 
@@ -51,4 +64,9 @@ resource "aws_lambda_function" "uploader" {
   runtime       = "python3.6"
   timeout       = 3
   role          = "${aws_iam_role.uploader.arn}"
+}
+
+
+resource "aws_cloudwatch_log_group" "uploader" {
+  name = "/aws/lambda/${aws_lambda_function.uploader.function_name}"
 }

@@ -7,18 +7,59 @@
         body {
             margin: 50px;
         }
+        input {
+            font-family: monospace;
+        }
+        a {
+            text-decoration: none;
+            color: black;
+            border-bottom: 1px solid black;
+            display: inline-block;
+            line-height: 0.85;
+        }
     </style>
 </head>
 <body>
     <pre style="font-size: 20px;">
-10kb.site
+<a href="/">10kb.site</a> 
     </pre>
     <pre>
-10kb.site is a write-only public fileserver.
-You can upload any file you want at any file
+10kb.site is a write-only public text server.
+You can upload any text you want at any file
 path, as long as it's less than 10kb.
 
 
+Files can never be changed or updated (except this one).
+Files are deleted after 1 day.
+
+Try it out:
+
+Uploading file to https://www.10kb.site/<input id=path type="text" />
+with body: <input id=body type="text" />
+<input id=submit type="submit" onclick=window.onsubmit()>
+<a id=out></a>
     </pre>
+
+    <script>
+        let gbid = (d) => document.getElementById(d)
+        let path = gbid("path")
+        let body = gbid("body")
+        let out = gbid("out")
+        let submit = gbid("submit")
+        path.value = Math.random().toString(35).substring(2)
+        body.value = "Type something here"
+        window.onsubmit = () => {
+            submit.value="loading..."
+            fetch("https://up.10kb.site/"+path.value, {
+                method: 'POST',
+                body: body.value,
+            }).then((resp) => resp.text())
+            .then((resp) => {
+                out.href = resp
+                out.innerText = resp
+                submit.remove()
+            })
+        }
+    </script>
 </body>
 </html>

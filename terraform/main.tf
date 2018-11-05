@@ -86,6 +86,13 @@ resource "aws_cloudfront_distribution" "10kb_site" {
   #   prefix          = "myprefix"
   # }
 
+  custom_error_response {
+    error_code = "404"
+    error_caching_min_ttl = 0
+    response_page_path = "/not-found.txt"
+    response_code = "404"
+  }
+
   aliases = ["www.10kb.site"]
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -123,4 +130,8 @@ resource "aws_cloudfront_distribution" "10kb_site" {
 
 output "cloudfront-subdomain" {
   value = "Set CNAME for cloudfront record: ${aws_cloudfront_distribution.10kb_site.domain_name}"
+}
+
+output "cloudfront-distribution-id" {
+  value = "${aws_cloudfront_distribution.10kb_site.id}"
 }
