@@ -1,6 +1,5 @@
 set -e
-aws s3 --profile=max cp ./index.html s3://10kb.site/index.html
-aws s3 --profile=max cp ./not-found.txt s3://10kb.site/not-found.txt
+aws s3 --profile=max cp --recursive ./10kb.site/ s3://10kb.site/
 aws cloudfront --profile=max create-invalidation \
     --distribution-id E1UAZ0RGAXYQFZ \
-    --paths /index.html /not-found.txt
+    --paths $(cd 10kb.site; ls | awk '$NF="/"$NF')

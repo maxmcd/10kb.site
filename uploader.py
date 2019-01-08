@@ -37,6 +37,8 @@ def lambda_handler(event, context):
     if event["httpMethod"] != "POST":
         return response(301, body=None, headers={"Location": "https://www.10kb.site/"})
     if event.get("path") and event["path"] != "/":
+        if event["path"][1] == ".":
+            return response(422, "No paths that start with a .")
         try:
             s3.Object("10kb.site", event["path"][1:]).load()
         except botocore.exceptions.ClientError as e:
@@ -51,7 +53,18 @@ def lambda_handler(event, context):
                     Expires=datetime.datetime.now() + datetime.timedelta(seconds=30),
                     Body=event["body"],
                     ContentType="text/plain",
-                    Tagging="unprotected=true",
+                )
+                client.put_object_tagging(
+                    Bucket="10kb.site",
+                    Key=event["path"][1:],
+                    Tagging={
+                        'TagSet': [
+                            {
+                                'Key': 'unprotected',
+                                'Value': 'true'
+                            },
+                        ]
+                    }
                 )
                 return response(201, "https://www.10kb.site/{}".format(event["path"][1:]))
             return response(500, str(e))
